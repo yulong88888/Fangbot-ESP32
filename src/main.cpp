@@ -7,6 +7,7 @@
 // #include <Hash.h>
 #include <SPIFFS.h>
 #include <SPIFFSEditor.h>
+#include <SD_MMC.h>
 
 // SKETCH BEGIN
 AsyncWebServer server(80);
@@ -145,7 +146,12 @@ void setup() {
 
   MDNS.addService("http", "tcp", 80);
 
-  SPIFFS.begin();
+  // SPIFFS.begin();
+  // SD卡
+  if (!SD_MMC.begin("/sdcard", true)) {
+    Serial.println("Card Mount Failed");
+    return;
+  }
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -155,13 +161,13 @@ void setup() {
   });
   server.addHandler(&events);
 
-  server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
+  // server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
 
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
   });
 
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.htm");
+  server.serveStatic("/", SD_MMC, "/").setDefaultFile("index.htm");
 
   server.onNotFound([](AsyncWebServerRequest *request) {
     Serial.printf("NOT_FOUND: ");

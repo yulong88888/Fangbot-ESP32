@@ -5,9 +5,9 @@
 #include <FS.h>
 #include <WiFi.h>
 // #include <Hash.h>
-#include <SPIFFS.h>
+#include <SD.h>
+// #include <SD_MMC.h>
 #include <SPIFFSEditor.h>
-#include <SD_MMC.h>
 
 // SKETCH BEGIN
 AsyncWebServer server(80);
@@ -101,8 +101,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
   }
 }
 
-const char *ssid = "lengmang.net";
-const char *password = "lengmang";
+const char *ssid = "imaker";
+const char *password = "Wlgf@001";
 const char *hostName = "esp-async";
 const char *http_username = "admin";
 const char *http_password = "admin";
@@ -148,10 +148,31 @@ void setup() {
 
   // SPIFFS.begin();
   // SD卡
-  if (!SD_MMC.begin("/sdcard", true)) {
-    Serial.println("Card Mount Failed");
-    return;
-  }
+  // if (!SD_MMC.begin("/sdcard", true)) {
+  //   Serial.println("Card Mount Failed");
+  //   return;
+  // }
+
+  boolean sd_success = false;
+  do {
+    sd_success = SD.begin();
+    // sd_success = SD_MMC.begin("/sdcard", true);
+    Serial.println("init sdcard");
+    delay(500);
+  } while (!sd_success);
+
+  // SD
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  Serial.printf("SD_MMC Card Size: %lluMB ", cardSize);
+  Serial.printf("Total space: %lluMB ", SD.totalBytes() / (1024 * 1024));
+  Serial.printf("Used space: %lluMB ", SD.usedBytes() / (1024 * 1024));
+  Serial.println("");
+  // SD_MMC
+  // uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
+  // Serial.printf("SD_MMC Card Size: %lluMB ", cardSize);
+  // Serial.printf("Total space: %lluMB ", SD_MMC.totalBytes() / (1024 * 1024));
+  // Serial.printf("Used space: %lluMB ", SD_MMC.usedBytes() / (1024 * 1024));
+  // Serial.println("");
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -161,13 +182,13 @@ void setup() {
   });
   server.addHandler(&events);
 
-  // server.addHandler(new SPIFFSEditor(SPIFFS, http_username, http_password));
+  server.addHandler(new SPIFFSEditor(SD, http_username, http_password));
 
   server.on("/heap", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", String(ESP.getFreeHeap()));
   });
 
-  server.serveStatic("/", SD_MMC, "/").setDefaultFile("index.htm");
+  server.serveStatic("/", SD, "/").setDefaultFile("index.htm");
 
   server.onNotFound([](AsyncWebServerRequest *request) {
     Serial.printf("NOT_FOUND: ");

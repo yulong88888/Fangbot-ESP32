@@ -12,4 +12,6 @@
 #define http_username "admin"
 #define http_password "admin"
 
+#define JSON_BUFFER_LENGTH 512
+
 #endif

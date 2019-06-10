@@ -9,7 +9,7 @@ class WebSocket {
  public:
   void setup();
   void onMsg(dataHandler h);
-  void sendMsg(ArduinoJson::JsonObject &msg);
+  void sendMsg(ArduinoJson::DynamicJsonDocument &msg);
 
  private:
 };

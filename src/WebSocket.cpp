@@ -1,5 +1,6 @@
 #include "WebSocket.h"
 #include <ESPAsyncWebServer.h>
+#include "config.h"
 
 AsyncWebServer wsServer(8888);
 AsyncWebSocket ws("/ws");
@@ -44,6 +45,8 @@ void WebSocket::setup() {
 
 void WebSocket::onMsg(dataHandler h) { handler = h; }
 
-void WebSocket::sendMsg(ArduinoJson::JsonObject &msg) {
-  // TODO
+void WebSocket::sendMsg(ArduinoJson::DynamicJsonDocument &msg) {
+  char jsonBuff[JSON_BUFFER_LENGTH];
+  serializeJson(msg, jsonBuff, sizeof(jsonBuff));
+  ws.textAll(jsonBuff, strlen(jsonBuff));
 }

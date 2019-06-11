@@ -7,11 +7,11 @@
 #define ssid "lengmang.net"
 #define password "lengmang"
 
-#define hostName "esp-async"
-
 #define http_username "admin"
 #define http_password "admin"
 
 #define JSON_BUFFER_LENGTH 512
+
+#define ap_name "4DclassRobot"
 
 #endif

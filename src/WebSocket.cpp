@@ -26,11 +26,15 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     //数据
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
+    String msg = "";
     if (info->final && info->index == 0 && info->len == len) {
       if (info->opcode == WS_TEXT) {
-        Serial.printf("%s\n", (char *)data);
+        for (size_t i = 0; i < info->len; i++) {
+          msg += (char)data[i];
+        }
+        Serial.printf("%s\n", msg.c_str());
         if (handler) {
-          handler((char *)data);
+          handler((char *)msg.c_str());
         }
       }
     }

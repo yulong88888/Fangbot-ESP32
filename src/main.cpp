@@ -4,16 +4,23 @@
 #include "Web.h"
 #include "WebSocket.h"
 #include "config.h"
+#include "Network.h"
 
 Web web;
 WebSocket webSocket;
 
+Network network;
+
+void taskHandler(char *data);
+
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  WiFi.setHostname(hostName);
+  WiFi.setHostname(network.getAPName());
   WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(hostName);
+  WiFi.softAP(network.getAPName());
+  network.startScanWifi();
+  network.getWifiScanData();
   WiFi.begin(ssid, password);
   delay(1000);
 
@@ -28,8 +35,23 @@ void setup() {
 
   //   MDNS.addService("http", "tcp", 80);
 
+  webSocket.onMsg(taskHandler);
+
   web.setup();
   webSocket.setup();
 }
 
 void loop() {}
+
+/**
+ * 任务回调函数
+ */
+void taskHandler(char *data) {
+  Serial.print("REV:");
+  Serial.println(data);
+  delay(1000);
+
+  DynamicJsonDocument doc(256);
+  doc["state"] = "OJBK";
+  webSocket.sendMsg(doc);
+}

@@ -1,17 +1,30 @@
 #include <ESPmDNS.h>
+#include <Thread.h>
+#include <ThreadController.h>
 #include <WiFi.h>
 #include "Arduino.h"
+#include "Audio.h"
+#include "Network.h"
 #include "Web.h"
 #include "WebSocket.h"
 #include "config.h"
-#include "Network.h"
 
 Web web;
 WebSocket webSocket;
 
 Network network;
 
+Audio audio;
+
+ThreadController manager = ThreadController();
+Thread *audioThread = new Thread();
+
 void taskHandler(char *data);
+
+/**
+ * Audio函数
+ */
+void audioPlay();
 
 void setup() {
   Serial.begin(115200);
@@ -39,9 +52,15 @@ void setup() {
 
   web.setup();
   webSocket.setup();
+  audio.setup();
+
+  audioThread->setInterval(0);
+  audioThread->onRun(audioPlay);
 }
 
-void loop() {}
+void loop() {
+  manager.run();
+}
 
 /**
  * 任务回调函数
@@ -51,7 +70,18 @@ void taskHandler(char *data) {
   Serial.println(data);
   delay(1000);
 
+  audio.select("/1.mp3");
+  manager.add(audioThread);
+
   DynamicJsonDocument doc(256);
   doc["state"] = "OJBK";
   webSocket.sendMsg(doc);
+}
+
+void audioPlay() {
+  if (audio.isFinish()) {
+    manager.remove(audioThread);
+  } else {
+    audio.loop();
+  }
 }

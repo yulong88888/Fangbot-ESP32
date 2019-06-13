@@ -14,4 +14,6 @@
 
 #define ap_name "4DclassRobot"
 
+#define PIN_AUDIO_EN 16
+
 #endif

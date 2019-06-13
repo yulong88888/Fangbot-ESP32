@@ -8,3 +8,11 @@
 | SCK  |   G16  |
 | MOSI |   G23  |
 | MISO |   G19  |
+
+## 8002A使能
+* ESP32 G16
+
+## NFC
+* SDA  G21;
+* SCL  G22;
+

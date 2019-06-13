@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include "Arduino.h"
 #include "Audio.h"
+#include "NFC.h"
 #include "Network.h"
 #include "Web.h"
 #include "WebSocket.h"
@@ -16,8 +17,11 @@ Network network;
 
 Audio audio;
 
+NFC nfc;
+
 ThreadController manager = ThreadController();
 Thread *audioThread = new Thread();
+Thread *nfcThread = new Thread();
 
 void taskHandler(char *data);
 
@@ -25,6 +29,10 @@ void taskHandler(char *data);
  * Audio函数
  */
 void audioPlay();
+/**
+ * NFC函数
+ */
+void nfcHandler();
 
 void setup() {
   Serial.begin(115200);
@@ -54,13 +62,18 @@ void setup() {
   webSocket.setup();
   audio.setup();
 
+  nfc.setup();
+
   audioThread->setInterval(0);
   audioThread->onRun(audioPlay);
+
+  nfcThread->setInterval(50);
+  nfcThread->onRun(nfcHandler);
+
+  manager.add(nfcThread);
 }
 
-void loop() {
-  manager.run();
-}
+void loop() { manager.run(); }
 
 /**
  * 任务回调函数
@@ -71,7 +84,7 @@ void taskHandler(char *data) {
   delay(1000);
 
   audio.select("/1.mp3");
-  manager.add(audioThread);
+  // manager.add(audioThread);
 
   DynamicJsonDocument doc(256);
   doc["state"] = "OJBK";
@@ -84,4 +97,9 @@ void audioPlay() {
   } else {
     audio.loop();
   }
+}
+
+void nfcHandler() {
+  Serial.println("0.0");
+  nfc.loop();
 }

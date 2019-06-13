@@ -67,7 +67,7 @@ void setup() {
   audioThread->setInterval(0);
   audioThread->onRun(audioPlay);
 
-  nfcThread->setInterval(50);
+  nfcThread->setInterval(10);
   nfcThread->onRun(nfcHandler);
 
   manager.add(nfcThread);
@@ -100,6 +100,10 @@ void audioPlay() {
 }
 
 void nfcHandler() {
-  Serial.println("0.0");
-  nfc.loop();
+  if (nfc.readSuccess()) {
+    Serial.println(nfc.getResult());
+    manager.remove(nfcThread);
+  } else {
+    nfc.loop();
+  }
 }

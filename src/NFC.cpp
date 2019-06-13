@@ -57,7 +57,7 @@ void NFC::loop() {
   String str = String((char *)buffer);
   if (str.length() != 0) {
     audioName = str + ".mp3";
-    readSuccess = true;
+    readSuccessFlag = true;
   }
 
   Serial.println(F("\n**End Reading**\n"));
@@ -68,11 +68,11 @@ void NFC::loop() {
   mfrc522->PCD_StopCrypto1();
 }
 
-bool NFC::checkReady() { return readSuccess; }
+bool NFC::readSuccess() { return readSuccessFlag; }
 
 String NFC::getResult() {
   if (!audioName.equals("")) {
-    readSuccess = false;
+    readSuccessFlag = false;
     return audioName;
   }
 }

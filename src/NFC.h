@@ -8,12 +8,12 @@ class NFC {
   void setup();
   void loop();
   String getResult();
-  bool checkReady();
+  bool readSuccess();
 
  private:
   int getBytesLength(byte *buffer);
   void dump_byte_array(byte *buffer, byte bufferSize);
-  bool readSuccess = false;
+  bool readSuccessFlag = false;
 };
 
 #endif

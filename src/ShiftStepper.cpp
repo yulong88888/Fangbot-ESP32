@@ -33,6 +33,7 @@ void ShiftStepper::stop() { _remaining = 0; }
 boolean ShiftStepper::ready() { return (_remaining < 0); }
 
 void ShiftStepper::turn(long steps, byte direction) {
+  delayCount = 0;
   if (steps < 0) {
     steps = -steps;
     direction = !direction;
@@ -43,6 +44,11 @@ void ShiftStepper::turn(long steps, byte direction) {
 }
 
 void ShiftStepper::trigger() {
+  delayCount++;
+  if (delayCount < 10) {
+    return;
+  }
+  delayCount = 0;
   setNextStep();
   sendBits();
 }

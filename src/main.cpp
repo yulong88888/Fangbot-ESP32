@@ -6,9 +6,15 @@
 #include "Audio.h"
 #include "NFC.h"
 #include "Network.h"
+#include "ShiftStepper.h"
+#include "Task.h"
 #include "Web.h"
 #include "WebSocket.h"
 #include "config.h"
+#include "servo.h"
+
+//任务
+Task task;
 
 Web web;
 WebSocket webSocket;
@@ -19,9 +25,19 @@ Audio audio;
 
 NFC nfc;
 
+float steps_per_mm = STEPS_PER_MM;
+float steps_per_degree = STEPS_PER_DEGREE;
+int wheel_distance = WHEEL_DISTANCE;
+ShiftStepper *left;
+ShiftStepper *right;
+
+Servo penServo;
+
 ThreadController manager = ThreadController();
 Thread *audioThread = new Thread();
 Thread *nfcThread = new Thread();
+Thread *shiftStepperThread = new Thread();
+Thread *servoThread = new Thread();
 
 void taskHandler(char *data);
 
@@ -33,6 +49,14 @@ void audioPlay();
  * NFC函数
  */
 void nfcHandler();
+/**
+ * 车轮函数
+ */
+void shiftStepper();
+/**
+ * 舵机函数
+ */
+void servo();
 
 void setup() {
   Serial.begin(115200);
@@ -60,17 +84,33 @@ void setup() {
 
   web.setup();
   webSocket.setup();
+
   audio.setup();
-
-  nfc.setup();
-
   audioThread->setInterval(0);
   audioThread->onRun(audioPlay);
 
+  nfc.setup();
   nfcThread->setInterval(10);
   nfcThread->onRun(nfcHandler);
 
-  manager.add(nfcThread);
+  //车轮
+  left = new ShiftStepper(0);
+  right = new ShiftStepper(1);
+  left->setup(PIN_SHIFT_REG_DATA, PIN_SHIFT_REG_CLOCK, PIN_SHIFT_REG_LATCH);
+  right->setup(PIN_SHIFT_REG_DATA, PIN_SHIFT_REG_CLOCK, PIN_SHIFT_REG_LATCH);
+
+  shiftStepperThread->setInterval(0);
+  shiftStepperThread->onRun(shiftStepper);
+
+  // manager.add(shiftStepperThread);
+  // left->turn(10000 * steps_per_mm, FORWARD);
+  // right->turn(10000 * steps_per_mm, BACKWARD);
+
+  penServo.setup(PIN_SERVO, PENUP_DELAY, PENDOWN_DELAY);
+  servoThread->setInterval(0);
+  servoThread->onRun(servo);
+
+  manager.add(servoThread);
 }
 
 void loop() { manager.run(); }
@@ -105,5 +145,32 @@ void nfcHandler() {
     manager.remove(nfcThread);
   } else {
     nfc.loop();
+  }
+}
+
+void shiftStepper() {
+  if (left->ready() && right->ready()) {
+    // taskFinish();
+    manager.remove(shiftStepperThread);
+    return;
+  }
+  left->trigger();
+  right->trigger();
+}
+
+bool flag = false;
+
+void servo() {
+  if (!penServo.ready()) {
+    penServo.servoHandler();
+  } else {
+    if (flag) {
+      penServo.setPenUp();
+    } else {
+      penServo.setPenDown();
+    }
+    flag = !flag;
+    // taskFinish();
+    // manager.remove(servoThread);
   }
 }

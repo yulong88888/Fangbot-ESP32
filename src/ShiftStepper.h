@@ -30,6 +30,8 @@ class ShiftStepper {
 
   int microCounter;
 
+  int delayCount = 0;
+
  public:
   ShiftStepper(int offset);
   ~ShiftStepper();

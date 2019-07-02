@@ -41,6 +41,8 @@ Thread *servoThread = new Thread();
 
 void taskHandler(char *data);
 
+String doTaskId = "";
+
 /**
  * Audio函数
  */
@@ -57,6 +59,10 @@ void shiftStepper();
  * 舵机函数
  */
 void servo();
+/**
+ * 完成任务
+ */
+void taskFinish();
 
 void setup() {
   Serial.begin(115200);
@@ -102,15 +108,9 @@ void setup() {
   shiftStepperThread->setInterval(0);
   shiftStepperThread->onRun(shiftStepper);
 
-  // manager.add(shiftStepperThread);
-  // left->turn(10000 * steps_per_mm, FORWARD);
-  // right->turn(10000 * steps_per_mm, BACKWARD);
-
   penServo.setup(PIN_SERVO, PENUP_DELAY, PENDOWN_DELAY);
   servoThread->setInterval(0);
   servoThread->onRun(servo);
-
-  manager.add(servoThread);
 }
 
 void loop() { manager.run(); }
@@ -121,18 +121,84 @@ void loop() { manager.run(); }
 void taskHandler(char *data) {
   Serial.print("REV:");
   Serial.println(data);
-  delay(1000);
 
-  audio.select("/1.mp3");
-  // manager.add(audioThread);
+  DynamicJsonDocument rev(256);
+  DynamicJsonDocument send(256);
 
-  DynamicJsonDocument doc(256);
-  doc["state"] = "OJBK";
-  webSocket.sendMsg(doc);
+  deserializeJson(rev, data);
+  String cmd = rev["cmd"];
+  String arg = rev["arg"];
+  String id = rev["id"];
+  //设置任务id
+  if (doTaskId != "") {
+    send["id"] = id;
+    send["state"] = "busy";
+    webSocket.sendMsg(send);
+    return;
+  }
+  doTaskId = id;
+
+  if (cmd.equals("forward")) {
+    Serial.println("forward");
+    int temp = arg.toInt();
+    if (temp > 0) {
+      left->turn(temp * steps_per_mm, FORWARD);
+      right->turn(temp * steps_per_mm, BACKWARD);
+      manager.add(shiftStepperThread);
+    }
+  }
+  if (cmd.equals("back")) {
+    Serial.println("back");
+    int temp = arg.toInt();
+    if (temp > 0) {
+      left->turn(temp * steps_per_mm, BACKWARD);
+      right->turn(temp * steps_per_mm, FORWARD);
+      manager.add(shiftStepperThread);
+    }
+  }
+  if (cmd.equals("left")) {
+    Serial.println("left");
+    int temp = arg.toInt();
+    if (temp > 0) {
+      left->turn(temp * steps_per_degree, FORWARD);
+      right->turn(temp * steps_per_degree, FORWARD);
+      manager.add(shiftStepperThread);
+    }
+  }
+  if (cmd.equals("right")) {
+    Serial.println("right");
+    int temp = arg.toInt();
+    if (temp > 0) {
+      left->turn(temp * steps_per_degree, BACKWARD);
+      right->turn(temp * steps_per_degree, BACKWARD);
+      manager.add(shiftStepperThread);
+    }
+  }
+  if (cmd.equals("pen")) {
+    if (arg.equals("up")) {
+      Serial.println("up");
+      penServo.setPenUp();
+    }
+    if (arg.equals("down")) {
+      Serial.println("down");
+      penServo.setPenDown();
+    }
+    manager.add(servoThread);
+  }
+  if (cmd.equals("nfcSing")) {
+    Serial.println("nfcSing");
+    // audio.select("/1.mp3");
+    // manager.add(audioThread);
+  }
+
+  send["id"] = id;
+  send["state"] = "rev";
+  webSocket.sendMsg(send);
 }
 
 void audioPlay() {
   if (audio.isFinish()) {
+    taskFinish();
     manager.remove(audioThread);
   } else {
     audio.loop();
@@ -150,7 +216,7 @@ void nfcHandler() {
 
 void shiftStepper() {
   if (left->ready() && right->ready()) {
-    // taskFinish();
+    taskFinish();
     manager.remove(shiftStepperThread);
     return;
   }
@@ -158,19 +224,19 @@ void shiftStepper() {
   right->trigger();
 }
 
-bool flag = false;
-
 void servo() {
   if (!penServo.ready()) {
     penServo.servoHandler();
   } else {
-    if (flag) {
-      penServo.setPenUp();
-    } else {
-      penServo.setPenDown();
-    }
-    flag = !flag;
-    // taskFinish();
-    // manager.remove(servoThread);
+    taskFinish();
+    manager.remove(servoThread);
   }
+}
+
+void taskFinish() {
+  DynamicJsonDocument send(256);
+  send["id"] = doTaskId;
+  send["state"] = "ok";
+  webSocket.sendMsg(send);
+  doTaskId = "";
 }

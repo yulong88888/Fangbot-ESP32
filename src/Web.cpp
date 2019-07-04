@@ -2,9 +2,12 @@
 #include <ESPAsyncWebServer.h>
 #include <SD.h>
 #include <SPIFFSEditor.h>
+#include "Network.h"
 #include "config.h"
 
 AsyncWebServer server(80);
+
+extern Network network;
 
 void Web::setup() {
   // SD卡初始化
@@ -24,12 +27,37 @@ void Web::setup() {
 
   //允许远程修改SD卡文件
   server.addHandler(new SPIFFSEditor(SD, http_username, http_password));
+  // 404
+  server.onNotFound([](AsyncWebServerRequest *request) { request->send(404); });
+  //处理配置
+  server.on("/api/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String message;
+    DynamicJsonDocument index(2048);
+    DynamicJsonDocument doc(1024);
+    network.startScanWifi();
+    doc = network.getWifiScanData();
+    index["ip"] = network.getIp();
+    index["ssids"] = doc;
+    String data = "";
+    serializeJson(index, data);
+    request->send(200, "application/json", data);
+  });
+  server.on("/api/wifi", HTTP_POST, [](AsyncWebServerRequest *request) {
+    String conn_ssid = "";
+    String conn_password = "";
+    if (request->hasParam("ssid", true)) {
+      conn_ssid = request->getParam("ssid", true)->value();
+    }
+    if (request->hasParam("password", true)) {
+      conn_password = request->getParam("password", true)->value();
+    }
+    Serial.println(conn_ssid);
+    Serial.println(conn_password);
+    request->send(200, "application/json", "");
+  });
+
   //配置路径
   server.serveStatic("/", SD, "/").setDefaultFile("index.htm");
-  // 404
-  server.onNotFound([](AsyncWebServerRequest *request) {
-    request->send(404);
-  });
 
   server.begin();
 }

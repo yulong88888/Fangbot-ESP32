@@ -70,8 +70,6 @@ void setup() {
   WiFi.setHostname(network.getAPName());
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(network.getAPName());
-  network.startScanWifi();
-  network.getWifiScanData();
   WiFi.begin(ssid, password);
   delay(1000);
 

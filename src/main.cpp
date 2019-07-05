@@ -185,8 +185,8 @@ void taskHandler(char *data) {
   }
   if (cmd.equals("nfcSing")) {
     Serial.println("nfcSing");
-    // audio.select("/1.mp3");
-    // manager.add(audioThread);
+    audio.select("/001地球.mp3");
+    manager.add(audioThread);
   }
 
   send["id"] = id;
@@ -198,6 +198,8 @@ void audioPlay() {
   if (audio.isFinish()) {
     taskFinish();
     manager.remove(audioThread);
+    left->setup(PIN_SHIFT_REG_DATA, PIN_SHIFT_REG_CLOCK, PIN_SHIFT_REG_LATCH);
+    right->setup(PIN_SHIFT_REG_DATA, PIN_SHIFT_REG_CLOCK, PIN_SHIFT_REG_LATCH);
   } else {
     audio.loop();
   }

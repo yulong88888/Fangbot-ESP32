@@ -57,7 +57,9 @@ void Web::setup() {
   });
 
   //配置路径
-  server.serveStatic("/", SD, "/").setDefaultFile("index.htm");
+  server.serveStatic("/", SD, "/html")
+      .setDefaultFile("index.html")
+      .setCacheControl("max-age=31536000");
 
   server.begin();
 }

@@ -1,6 +1,7 @@
 #include "Web.h"
 #include <ESPAsyncWebServer.h>
 #include <SD.h>
+#include <SPIFFS.h>
 #include <SPIFFSEditor.h>
 #include "Network.h"
 #include "config.h"
@@ -24,6 +25,8 @@ void Web::setup() {
   Serial.printf("Total space: %lluMB ", SD.totalBytes() / (1024 * 1024));
   Serial.printf("Used space: %lluMB ", SD.usedBytes() / (1024 * 1024));
   Serial.println("");
+
+  SPIFFS.begin();
 
   //允许远程修改SD卡文件
   server.addHandler(new SPIFFSEditor(SD, http_username, http_password));
@@ -57,7 +60,7 @@ void Web::setup() {
   });
 
   //配置路径
-  server.serveStatic("/", SD, "/html")
+  server.serveStatic("/", SPIFFS, "/")
       .setDefaultFile("index.html")
       .setCacheControl("max-age=31536000");
 

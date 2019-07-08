@@ -8,10 +8,11 @@ char *Network::getAPName() {
   }
   String temp = WiFi.softAPmacAddress();
   temp.replace(":", "");
+  String mac = temp.substring(8, 12);
   String result = "";
   result += ap_name;
   result += "-";
-  result += temp.substring(4);
+  result += mac;
   return (char *)result.c_str();
 }
 
@@ -52,6 +53,4 @@ DynamicJsonDocument Network::getWifiScanData() {
 
 void Network::startScanWifi() { WiFi.scanNetworks(); }
 
-String Network::getIp(){
-    return WiFi.localIP().toString();
-}
+String Network::getIp() { return WiFi.localIP().toString(); }

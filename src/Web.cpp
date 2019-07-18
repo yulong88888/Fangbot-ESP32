@@ -9,6 +9,7 @@
 AsyncWebServer server(80);
 
 extern Network network;
+extern Config config;
 
 void Web::setup() {
   // SD卡初始化
@@ -56,7 +57,18 @@ void Web::setup() {
     }
     Serial.println(conn_ssid);
     Serial.println(conn_password);
-    request->send(200, "application/json", "");
+    if (WiFi.isConnected()) {
+      WiFi.disconnect();
+      delay(100);
+    }
+    WiFi.begin((char *)conn_ssid.c_str(), (char *)conn_password.c_str());
+    if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+      request->send(200, "application/json", "fail");
+    } else {
+      config.set_ssid(conn_ssid);
+      config.set_password(conn_password);
+      request->send(200, "application/json", "success");
+    }
   });
 
   //配置路径

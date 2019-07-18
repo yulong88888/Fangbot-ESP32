@@ -13,6 +13,13 @@
 #include "config.h"
 #include "servo.h"
 
+// EEPROM参数
+String ssid = "";
+String password = "";
+float steps_per_mm = 0;
+float steps_per_degree = 0;
+int wheel_distance = 0;
+
 //任务
 Task task;
 
@@ -25,9 +32,8 @@ Audio audio;
 
 NFC nfc;
 
-float steps_per_mm = STEPS_PER_MM;
-float steps_per_degree = STEPS_PER_DEGREE;
-int wheel_distance = WHEEL_DISTANCE;
+Config config;
+
 ShiftStepper *left;
 ShiftStepper *right;
 
@@ -43,6 +49,10 @@ void taskHandler(char *data);
 
 String doTaskId = "";
 
+/**
+ * 初始化参数
+ */
+void initParams();
 /**
  * Audio函数
  */
@@ -67,17 +77,18 @@ void taskFinish();
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
+  config.setup();
+  initParams();
+  WiFi.persistent(false);
   WiFi.setHostname(network.getAPName());
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(network.getAPName());
-  WiFi.begin(ssid, password);
-  delay(1000);
 
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.printf("STA: Failed!\n");
-    WiFi.disconnect(false);
-    delay(1000);
-    WiFi.begin(ssid, password);
+  if (!ssid.equals("")) {
+    WiFi.begin((char *)ssid.c_str(), (char *)password.c_str());
+    if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+      Serial.println("Conn Failed!");
+    }
   }
 
   Serial.println(WiFi.localIP());
@@ -239,4 +250,19 @@ void taskFinish() {
   send["state"] = "ok";
   webSocket.sendMsg(send);
   doTaskId = "";
+}
+
+void initParams() {
+  ssid = config.get_ssid();
+  password = config.get_password();
+  wheel_distance = (config.get_wheel_distance()).toFloat();
+  steps_per_mm = ((config.get_step_per_turn()).toFloat()) /
+                 ((config.get_circumference_mm()).toFloat());
+  steps_per_degree = ((wheel_distance * 3.1416) / 360) * steps_per_mm;
+
+  Serial.println(ssid);
+  Serial.println(password);
+  Serial.println(wheel_distance);
+  Serial.println(steps_per_mm);
+  Serial.println(steps_per_degree);
 }

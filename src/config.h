@@ -29,8 +29,8 @@
 
 #define STEPS_PER_TURN "2048.0"
 
-#define CIRCUMFERENCE_MM "230.0f"
-#define WHEEL_DISTANCE "82.2f"
+#define CIRCUMFERENCE_MM "230.0"
+#define WHEEL_DISTANCE "82.2"
 
 class Config {
  private:

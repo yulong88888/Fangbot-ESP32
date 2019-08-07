@@ -6,6 +6,12 @@
 // #define ssid "lengmang.net"
 // #define password "lengmang"
 
+#define VERSION "0.0.1"
+
+#define URL_VERSION "http://www.4dclass.net:8888/robot/version.json"
+#define URL_BIN_UI "http://www.4dclass.net:8888/robot/spiffs.bin"
+#define URL_BIN_FIRMWARE "http://www.4dclass.net:8888/robot/firmware.bin"
+
 #define http_username "admin"
 #define http_password "admin"
 

@@ -12,6 +12,10 @@ extern Network network;
 extern Config config;
 extern void initParams();
 
+Web *context = NULL;
+
+Web::Web() { context = this; }
+
 void Web::setup() {
   // SD卡初始化
   boolean sd_success = false;
@@ -36,7 +40,6 @@ void Web::setup() {
   server.onNotFound([](AsyncWebServerRequest *request) { request->send(404); });
   //处理配置
   server.on("/api/wifi", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String message;
     DynamicJsonDocument index(2048);
     DynamicJsonDocument doc(1024);
     network.startScanWifi();
@@ -82,7 +85,6 @@ void Web::setup() {
     request->send(200, "application/json", data);
   });
   server.on("/api/setting", HTTP_GET, [](AsyncWebServerRequest *request) {
-    String message;
     DynamicJsonDocument setting(1024);
     setting["steps_per_turn"] = config.get_step_per_turn();
     setting["circumference_mm"] = config.get_circumference_mm();
@@ -123,10 +125,77 @@ void Web::setup() {
     serializeJson(setState, data);
     request->send(200, "application/json", data);
   });
+  server.on("/api/version", HTTP_GET, [](AsyncWebServerRequest *request) {
+    DynamicJsonDocument version(1024);
+    DynamicJsonDocument local(512);
+    DynamicJsonDocument remote(512);
+    local["ui"] = context->getVersionUI();
+    local["firmware"] = context->getVersionFirmware();
+    version["local"] = local;
+    String tempStr = context->getVersionFromServer();
+    if (tempStr != "") {
+      DynamicJsonDocument temp(512);
+      deserializeJson(temp, tempStr);
+      version["remote"] = temp;
+    }
+    String result = "";
+    serializeJson(version, result);
+    request->send(200, "application/json", result);
+  });
+  server.on("/api/version", HTTP_POST, [](AsyncWebServerRequest *request) {
+    String mode = "";
+    if (request->hasParam("mode", true)) {
+      mode = request->getParam("mode", true)->value();
+    }
+    Serial.println(mode);
+    int code = -1;
+    String msg = "Parameter error";
+    DynamicJsonDocument temp(512);
+    temp["code"] = code;
+    temp["msg"] = msg;
+    if (mode != "") {
+      context->needUpdate = mode;
+      temp["code"] = 0;
+      temp["msg"] = "Start update ";
+    }
+    String data = "";
+    serializeJson(temp, data);
+    request->send(200, "application/json", data);
+  });
   //配置路径
   server.serveStatic("/", SPIFFS, "/")
       .setDefaultFile("index.html")
       .setCacheControl("max-age=31536000");
 
   server.begin();
+}
+
+String Web::getVersionUI() {
+  File file = SPIFFS.open("/version.json");
+  if (!file || file.isDirectory()) {
+    Serial.println("getVersionUI failed");
+  }
+  String temp = "";
+  while (file.available()) {
+    temp += file.readString();
+  }
+  DynamicJsonDocument versionObj(256);
+  deserializeJson(versionObj, temp);
+  String result = versionObj["version"];
+  return result;
+}
+
+String Web::getVersionFirmware() { return VERSION; }
+
+String Web::getVersionFromServer() {
+  HTTPClient http;
+  String result = "";
+  http.begin(URL_VERSION);
+  int httpCode = http.GET();
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      result = http.getString();
+    }
+  }
+  return result;
 }

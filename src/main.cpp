@@ -1,4 +1,5 @@
 #include <ESPmDNS.h>
+#include <HTTPUpdate.h>
 #include <Thread.h>
 #include <ThreadController.h>
 #include <WiFi.h>
@@ -122,7 +123,35 @@ void setup() {
   servoThread->onRun(servo);
 }
 
-void loop() { manager.run(); }
+void loop() {
+  if (web.needUpdate == "") {
+    manager.run();
+  } else {
+    t_httpUpdate_return ret;
+    WiFiClient client;
+    if (web.needUpdate == "ui") {
+      ret = httpUpdate.updateSpiffs(client, URL_BIN_UI);
+    }
+    if (web.needUpdate == "firmware") {
+      ret = httpUpdate.update(client, URL_BIN_FIRMWARE);
+    }
+    String msg = "";
+    switch (ret) {
+      case HTTP_UPDATE_FAILED:
+        msg = httpUpdate.getLastErrorString().c_str();
+        break;
+      case HTTP_UPDATE_NO_UPDATES:
+        msg = "no updates";
+        break;
+      case HTTP_UPDATE_OK:
+        msg = "update completed";
+        ESP.restart();
+        break;
+    }
+    Serial.println(msg);
+    web.needUpdate = "";
+  }
+}
 
 /**
  * 任务回调函数

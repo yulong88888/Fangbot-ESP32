@@ -1,7 +1,10 @@
 #include "Audio.h"
 #include "config.h"
 
-void Audio::setup() { pinMode(PIN_AUDIO_EN, OUTPUT); }
+void Audio::setup() {
+  pinMode(PIN_AUDIO_EN, OUTPUT);
+  digitalWrite(PIN_AUDIO_EN, HIGH);
+}
 
 void Audio::select(char *name) {
   file = new AudioFileSourceSD(name);
@@ -14,9 +17,7 @@ void Audio::select(char *name) {
   mp3->begin(id3, out);
 }
 
-bool Audio::isFinish(){
-    return finishFlag;
-}
+bool Audio::isFinish() { return finishFlag; }
 
 void Audio::loop() {
   if (mp3->isRunning()) {

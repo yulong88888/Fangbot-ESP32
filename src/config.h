@@ -33,6 +33,10 @@
 #define PIN_SHIFT_REG_CLOCK 33
 #define PIN_SHIFT_REG_LATCH 26
 
+// RGB灯
+#define PIN_LED_RGB 27
+#define LED_RGB_NUM 2
+
 #define STEPS_PER_TURN "2048.0"
 
 #define CIRCUMFERENCE_MM "230.0"

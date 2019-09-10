@@ -225,7 +225,7 @@ void taskHandler(char *data) {
   }
   if (cmd.equals("nfcSing")) {
     Serial.println("nfcSing");
-    audio.select("/001地球.mp3");
+    audio.select("/test.mp3");
     manager.add(audioThread);
   }
 

@@ -11,10 +11,12 @@ void loop() {
   pixels.clear();
 
   for (int i = 0; i < LED_RGB_NUM; i++) {
-    pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+    // pixels.setPixelColor(i, pixels.Color(255, 0, 0));
+    String temp = "0xFF8000";
+    pixels.setPixelColor(i, temp.toFloat());
 
     pixels.show();
 
-    delay(DELAYVAL);
+    // delay(DELAYVAL);
   }
 }

@@ -1,3 +1,4 @@
+#include <Adafruit_NeoPixel.h>
 #include <ESPmDNS.h>
 #include <HTTPUpdate.h>
 #include <Thread.h>
@@ -40,6 +41,8 @@ ShiftStepper *right;
 
 Servo penServo;
 
+Adafruit_NeoPixel pixels(LED_RGB_NUM, PIN_LED_RGB, NEO_GRB + NEO_KHZ800);
+
 ThreadController manager = ThreadController();
 Thread *audioThread = new Thread();
 Thread *nfcThread = new Thread();
@@ -74,8 +77,14 @@ void servo();
  * 完成任务
  */
 void taskFinish();
+/**
+ * 设置颜色
+ */
+void setLED(String color1, String color2);
 
 void setup() {
+  pixels.begin();
+  setLED("0xFF0000", "0xFF0000");
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   config.setup();
@@ -93,8 +102,6 @@ void setup() {
   }
 
   Serial.println(WiFi.localIP());
-
-  //   MDNS.addService("http", "tcp", 80);
 
   webSocket.onMsg(taskHandler);
 
@@ -121,6 +128,9 @@ void setup() {
   penServo.setup(PIN_SERVO, PENUP_DELAY, PENDOWN_DELAY);
   servoThread->setInterval(0);
   servoThread->onRun(servo);
+
+  //完成初始化
+  setLED("0x00FF00", "0x00FF00");
 }
 
 void loop() {
@@ -228,6 +238,13 @@ void taskHandler(char *data) {
     audio.select("/test.mp3");
     manager.add(audioThread);
   }
+  if (cmd.equals("led")) {
+    Serial.println("led");
+    DynamicJsonDocument temp(256);
+    deserializeJson(temp, arg);
+    setLED(temp["color1"], temp["color2"]);
+    taskFinish();
+  }
 
   send["id"] = id;
   send["state"] = "rev";
@@ -294,4 +311,11 @@ void initParams() {
   Serial.println(wheel_distance);
   Serial.println(steps_per_mm);
   Serial.println(steps_per_degree);
+}
+
+void setLED(String color1, String color2) {
+  pixels.clear();
+  pixels.setPixelColor(0, color1.toFloat());
+  pixels.setPixelColor(1, color2.toFloat());
+  pixels.show();
 }

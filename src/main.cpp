@@ -130,7 +130,7 @@ void setup() {
   servoThread->onRun(servo);
 
   //完成初始化
-  setLED("0x00FF00", "0x00FF00");
+  setLED("0x0000FF", "0x0000FF");
 }
 
 void loop() {
@@ -316,6 +316,7 @@ void initParams() {
 void setLED(String color1, String color2) {
   pixels.clear();
   pixels.setPixelColor(0, color1.toFloat());
+  pixels.show();
   pixels.setPixelColor(1, color2.toFloat());
   pixels.show();
 }
